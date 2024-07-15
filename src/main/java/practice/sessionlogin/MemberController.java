@@ -1,6 +1,10 @@
 package practice.sessionlogin;
 
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -16,7 +20,16 @@ public class MemberController {
     }
 
     @GetMapping("/")
-    public String mainPage() {
+    public String mainPage(
+            @CookieValue(name = "loginUserEmail", required = false) String email,
+            Model model
+    ) {
+        if (email != null) {
+            model.addAttribute("loggedIn", true);
+            Member member = memberRepository.findByEmail(email)
+                    .orElseThrow(() -> new IllegalStateException());
+            model.addAttribute("nickname", member.getNickname());
+        }
         return "index";
     }
 
@@ -49,7 +62,8 @@ public class MemberController {
     @PostMapping("/login")
     public String login(
             @ModelAttribute LoginRequest params,
-            RedirectAttributes redirectAttributes
+            RedirectAttributes redirectAttributes,
+            HttpServletResponse response
     ) {
         Member member = memberRepository.findByEmail(params.email())
                 .orElse(null);
@@ -60,6 +74,10 @@ public class MemberController {
         }
 
         // 로그인 성공 처리
+        response.addCookie(
+                // Set-Cookie: loginUserEmail=dora@gmail.com
+                new Cookie("loginUserEmail", member.getEmail())
+        );
 
         return "redirect:/";
     }
