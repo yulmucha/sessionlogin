@@ -10,26 +10,33 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.Map;
+import java.util.UUID;
+
 @Controller
 public class MemberController {
 
     private final MemberRepository memberRepository;
+    private final SessionManager sessionManager;
 
-    public MemberController(MemberRepository memberRepository) {
+    public MemberController(MemberRepository memberRepository, SessionManager sessionManager) {
         this.memberRepository = memberRepository;
+        this.sessionManager = sessionManager;
     }
 
     @GetMapping("/")
     public String mainPage(
-            @CookieValue(name = "loginUserEmail", required = false) String email,
+            @CookieValue(name = "SESSIONID", required = false) String sessionId,
             Model model
     ) {
-        if (email != null) {
-            model.addAttribute("loggedIn", true);
-            Member member = memberRepository.findByEmail(email)
-                    .orElseThrow(() -> new IllegalStateException());
-            model.addAttribute("nickname", member.getNickname());
+        Map<String, Object> session = sessionManager.getSession(sessionId, false);
+        if (session == null) {
+            return "index";
         }
+
+        Member member = (Member) session.get("loginMember");
+        model.addAttribute("loggedIn", true);
+        model.addAttribute("nickname", member.getNickname());
         return "index";
     }
 
@@ -74,19 +81,18 @@ public class MemberController {
         }
 
         // 로그인 성공 처리
-        response.addCookie(
-                // Set-Cookie: loginUserEmail=dora@gmail.com
-                new Cookie("loginUserEmail", member.getEmail())
-        );
+        String sessionId = UUID.randomUUID().toString();
+        Map<String, Object> session = sessionManager.getSession(sessionId, true);
+        session.put("loginMember", member);
+        // Set-Cookie: SESSIONID=59b4a27c-14b3-44a2-9d49-ffb4b8783a5e
+        response.addCookie(new Cookie("SESSIONID", sessionId));
 
         return "redirect:/";
     }
 
     @PostMapping("/logout")
-    public String logout(HttpServletResponse response) {
-        Cookie cookie = new Cookie("loginUserEmail", null);
-        cookie.setMaxAge(0); // 브라우저가 쿠키를 삭제하도록 값 세팅
-        response.addCookie(cookie);
+    public String logout(@CookieValue(name = "SESSIONID", required = false) String sessionId) {
+        sessionManager.invalidate(sessionId);
 
         return "redirect:/";
     }
