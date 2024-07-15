@@ -81,4 +81,13 @@ public class MemberController {
 
         return "redirect:/";
     }
+
+    @PostMapping("/logout")
+    public String logout(HttpServletResponse response) {
+        Cookie cookie = new Cookie("loginUserEmail", null);
+        cookie.setMaxAge(0); // 브라우저가 쿠키를 삭제하도록 값 세팅
+        response.addCookie(cookie);
+
+        return "redirect:/";
+    }
 }
