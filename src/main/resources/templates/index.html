@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>메인 페이지</title>
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2980b9;
+            --background-color: #f4f4f4;
+            --text-color: #333;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: #fff;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .welcome-message {
+            font-size: 1.2rem;
+        }
+
+        .auth-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.3s;
+        }
+
+        .btn-primary {
+            background-color: var(--secondary-color);
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            background-color: #1c638e;
+        }
+
+        .btn-secondary {
+            background-color: #fff;
+            color: var(--primary-color);
+        }
+
+        .btn-secondary:hover {
+            background-color: #e6e6e6;
+        }
+
+        main {
+            margin-top: 2rem;
+        }
+    </style>
+</head>
+<body>
+<header>
+    <div class="container">
+        <div class="welcome-message" th:if="${loggedIn}">
+            <span th:text="${nickname + '님 환영합니다'}"></span>
+        </div>
+        <div class="welcome-message" th:unless="${loggedIn}">
+            환영합니다
+        </div>
+        <div class="auth-buttons">
+            <div th:if="${loggedIn}">
+                <form th:action="@{/logout}" method="post">
+                    <button type="submit" class="btn btn-secondary">로그아웃</button>
+                </form>
+            </div>
+            <div th:unless="${loggedIn}">
+                <a th:href="@{/login}" class="btn btn-primary">로그인</a>
+                <a th:href="@{/signup}" class="btn btn-secondary">회원가입</a>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main>
+    <div class="container">
+        <h1>메인 페이지 내용</h1>
+        <!-- 여기에 메인 페이지의 주요 내용을 추가하세요 -->
+    </div>
+</main>
+</body>
+</html>
