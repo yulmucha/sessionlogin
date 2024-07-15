@@ -4,6 +4,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 public class MemberController {
@@ -43,5 +44,23 @@ public class MemberController {
     @GetMapping("/login")
     public String loginPage() {
         return "members/login";
+    }
+
+    @PostMapping("/login")
+    public String login(
+            @ModelAttribute LoginRequest params,
+            RedirectAttributes redirectAttributes
+    ) {
+        Member member = memberRepository.findByEmail(params.email())
+                .orElse(null);
+        // email, password 검증
+        if (member == null || !member.authenticate(params.password())) {
+            redirectAttributes.addFlashAttribute("error", "ID 또는 PW가 일치하지 않습니다.");
+            return "redirect:/login";
+        }
+
+        // 로그인 성공 처리
+
+        return "redirect:/";
     }
 }
