@@ -24,15 +24,13 @@ public class MemberController {
 
     @GetMapping("/")
     public String mainPage(
-            HttpServletRequest request,
+            @SessionAttribute(name = "loginMember", required = false) Member member,
             Model model
     ) {
-        HttpSession session = request.getSession(false);
-        if (session == null) {
+        if (member == null) {
             return "index";
         }
 
-        Member member = (Member) session.getAttribute("loginMember");
         model.addAttribute("loggedIn", true);
         model.addAttribute("nickname", member.getNickname());
         return "index";
