@@ -1,40 +1,38 @@
 package practice.sessionlogin;
 
-import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.SessionAttribute;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.Map;
-import java.util.UUID;
 
 @Controller
 public class MemberController {
 
     private final MemberRepository memberRepository;
-    private final SessionManager sessionManager;
 
-    public MemberController(MemberRepository memberRepository, SessionManager sessionManager) {
+    public MemberController(MemberRepository memberRepository) {
         this.memberRepository = memberRepository;
-        this.sessionManager = sessionManager;
     }
 
     @GetMapping("/")
     public String mainPage(
-            @CookieValue(name = "SESSIONID", required = false) String sessionId,
+            HttpServletRequest request,
             Model model
     ) {
-        Map<String, Object> session = sessionManager.getSession(sessionId, false);
+        HttpSession session = request.getSession(false);
         if (session == null) {
             return "index";
         }
 
-        Member member = (Member) session.get("loginMember");
+        Member member = (Member) session.getAttribute("loginMember");
         model.addAttribute("loggedIn", true);
         model.addAttribute("nickname", member.getNickname());
         return "index";
@@ -70,7 +68,7 @@ public class MemberController {
     public String login(
             @ModelAttribute LoginRequest params,
             RedirectAttributes redirectAttributes,
-            HttpServletResponse response
+            HttpServletRequest request
     ) {
         Member member = memberRepository.findByEmail(params.email())
                 .orElse(null);
@@ -81,18 +79,18 @@ public class MemberController {
         }
 
         // 로그인 성공 처리
-        String sessionId = UUID.randomUUID().toString();
-        Map<String, Object> session = sessionManager.getSession(sessionId, true);
-        session.put("loginMember", member);
-        // Set-Cookie: SESSIONID=59b4a27c-14b3-44a2-9d49-ffb4b8783a5e
-        response.addCookie(new Cookie("SESSIONID", sessionId));
+        HttpSession session = request.getSession();
+        session.setAttribute("loginMember", member);
 
         return "redirect:/";
     }
 
     @PostMapping("/logout")
-    public String logout(@CookieValue(name = "SESSIONID", required = false) String sessionId) {
-        sessionManager.invalidate(sessionId);
+    public String logout(HttpServletRequest request) {
+        HttpSession session = request.getSession(false);
+        if (session != null) {
+            session.invalidate();
+        }
 
         return "redirect:/";
     }
